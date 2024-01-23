@@ -158,17 +158,17 @@ def main(argv=sys.argv):
 
     print(f"Spawning server with url: [{args.server_url}:{args.port}]")
 
-    msg_type = ""
+    msg_types = []
     if args.fleet_state:
-        msg_type = RmfMsgType.FleetState
-    elif args.fleet_log:
-        msg_type = RmfMsgType.FleetLog
-    elif args.task_state:
-        msg_type = RmfMsgType.TaskState
-    elif args.task_log:
-        msg_type = RmfMsgType.TaskLog
-    else:
-        print('Error! No msg_type is selected. select one: \n',
+        msg_types.append(RmfMsgType.FleetState)
+    if args.fleet_log:
+        msg_types.append(RmfMsgType.FleetLog)
+    if args.task_state:
+        msg_types.append(RmfMsgType.TaskState)
+    if args.task_log:
+        msg_types.append(RmfMsgType.TaskLog)
+    if len(msg_types) == 0:
+        print('Error! No msg_type is selected. select one or more: \n',
               '  task_state, task_log, fleet_state, fleet_log \n')
         parser.print_help(sys.stderr)
         exit(1)
@@ -176,19 +176,19 @@ def main(argv=sys.argv):
     if args.msg_filters is None:
         args.msg_filters = []
 
-    print(f"Listening to [{msg_type}] with filters {args.msg_filters}.....")
+    print(f"Listening to [{msg_types}] with filters {args.msg_filters}.....")
 
     def msg_callback(msg_type, data):
-        print(f" \nReceived [{msg_type}] :: Data: \n   "
-              f"{data}")
+        if msg_type in msg_types:
+            print(f" \nReceived [{msg_type}] :: Data: \n   "
+                f"{data}")
 
     observer = AsyncRmfMsgObserver(
         msg_callback,
-        msg_filters={msg_type: args.msg_filters},
+        msg_filters={msg_type: args.msg_filters for msg_type in msg_types},
         server_url=args.server_url,
         server_port=args.port
     )
-    observer.spin()
 
 
 if __name__ == '__main__':
